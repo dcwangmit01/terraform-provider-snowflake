@@ -138,6 +138,24 @@ var (
 				WithValidation(g.ConflictingFields, "IfNotExists", "OrReplace"),
 		).
 		CustomOperation(
+			"CreateOnDynamicTable",
+			"https://docs.snowflake.com/en/sql-reference/sql/create-stream",
+			g.NewQueryStruct("CreateStreamOnDynamicTable").
+				Create().
+				OrReplace().
+				SQL("STREAM").
+				IfNotExists().
+				Name().
+				OptionalCopyGrants().
+				SQL("ON DYNAMIC TABLE").
+				Identifier("DynamicTableId", g.KindOfT[SchemaObjectIdentifier](), g.IdentifierOptions().Required()).
+				OptionalQueryStructField("On", onStreamDef, g.KeywordOptions()).
+				OptionalComment().
+				WithValidation(g.ValidIdentifier, "name").
+				WithValidation(g.ValidIdentifier, "DynamicTableId").
+				WithValidation(g.ConflictingFields, "IfNotExists", "OrReplace"),
+		).
+		CustomOperation(
 			"Clone",
 			"https://docs.snowflake.com/en/sql-reference/sql/create-stream#variant-syntax",
 			g.NewQueryStruct("CloneStream").
