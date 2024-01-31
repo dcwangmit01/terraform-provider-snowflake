@@ -7,6 +7,7 @@ var (
 	_ validatable = new(CreateOnExternalTableStreamOptions)
 	_ validatable = new(CreateOnDirectoryTableStreamOptions)
 	_ validatable = new(CreateOnViewStreamOptions)
+	_ validatable = new(CreateOnDynamicTableStreamOptions)
 	_ validatable = new(CloneStreamOptions)
 	_ validatable = new(AlterStreamOptions)
 	_ validatable = new(DropStreamOptions)
@@ -110,6 +111,33 @@ func (opts *CreateOnViewStreamOptions) validate() error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+func (opts *CreateOnDynamicTableStreamOptions) validate() error {
+	if opts == nil {
+		return ErrNilOptions
+	}
+	var errs []error
+	if !ValidObjectIdentifier(opts.name) {
+		errs = append(errs, ErrInvalidObjectIdentifier)
+	}
+	if !ValidObjectIdentifier(opts.DynamicTableId) {
+		errs = append(errs, ErrInvalidObjectIdentifier)
+	}
+	if everyValueSet(opts.IfNotExists, opts.OrReplace) {
+		errs = append(errs, errOneOf("CreateOnDynamicTableStreamOptions", "IfNotExists", "OrReplace"))
+	}
+	if valueSet(opts.On) {
+		if !exactlyOneValueSet(opts.On.At, opts.On.Before) {
+			errs = append(errs, errExactlyOneOf("CreateOnDynamicTableStreamOptions.On", "At", "Before"))
+		}
+		if valueSet(opts.On.Statement) {
+			if !exactlyOneValueSet(opts.On.Statement.Timestamp, opts.On.Statement.Offset, opts.On.Statement.Statement, opts.On.Statement.Stream) {
+				errs = append(errs, errExactlyOneOf("CreateOnDynamicTableStreamOptions.On.Statement", "Timestamp", "Offset", "Statement", "Stream"))
+			}
+		}
+	}
+	return JoinErrors(errs...)
 }
 
 func (opts *CloneStreamOptions) validate() error {

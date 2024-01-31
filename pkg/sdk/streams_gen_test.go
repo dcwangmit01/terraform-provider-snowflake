@@ -285,6 +285,82 @@ func TestStreams_CreateOnView(t *testing.T) {
 	})
 }
 
+func TestStreams_CreateOnDynamicTable(t *testing.T) {
+	id := RandomSchemaObjectIdentifier()
+	dynamicTableId := RandomSchemaObjectIdentifier()
+
+	// Minimal valid CreateOnDynamicTableStreamOptions
+	defaultOpts := func() *CreateOnDynamicTableStreamOptions {
+		return &CreateOnDynamicTableStreamOptions{
+			name:           id,
+			DynamicTableId: dynamicTableId,
+			On: &OnStream{
+				At: Bool(true),
+				Statement: OnStreamStatement{
+					Stream: String("123"),
+				},
+			},
+		}
+	}
+
+	t.Run("validation: nil options", func(t *testing.T) {
+		var opts *CreateOnDynamicTableStreamOptions = nil
+		assertOptsInvalidJoinedErrors(t, opts, ErrNilOptions)
+	})
+
+	t.Run("validation: valid identifier for [opts.name]", func(t *testing.T) {
+		opts := defaultOpts()
+		opts.name = NewSchemaObjectIdentifier("", "", "")
+		assertOptsInvalidJoinedErrors(t, opts, ErrInvalidObjectIdentifier)
+	})
+
+	t.Run("validation: valid identifier for [opts.DynamicTableId]", func(t *testing.T) {
+		opts := defaultOpts()
+		opts.DynamicTableId = NewSchemaObjectIdentifier("", "", "")
+		assertOptsInvalidJoinedErrors(t, opts, ErrInvalidObjectIdentifier)
+	})
+
+	t.Run("validation: conflicting fields for [opts.IfNotExists opts.OrReplace]", func(t *testing.T) {
+		opts := defaultOpts()
+		opts.IfNotExists = Bool(true)
+		opts.OrReplace = Bool(true)
+		assertOptsInvalidJoinedErrors(t, opts, errOneOf("CreateOnDynamicTableStreamOptions", "IfNotExists", "OrReplace"))
+	})
+
+	t.Run("validation: exactly one field from [opts.On.At opts.On.Before] should be present", func(t *testing.T) {
+		opts := defaultOpts()
+		opts.On.At = Bool(true)
+		opts.On.Before = Bool(true)
+		assertOptsInvalidJoinedErrors(t, opts, errExactlyOneOf("CreateOnDynamicTableStreamOptions.On", "At", "Before"))
+	})
+
+	t.Run("validation: exactly one field from [opts.On.Statement.Timestamp opts.On.Statement.Offset opts.On.Statement.Statement opts.On.Statement.Stream] should be present", func(t *testing.T) {
+		opts := defaultOpts()
+		opts.On.Statement = OnStreamStatement{}
+		assertOptsInvalidJoinedErrors(t, opts, errExactlyOneOf("CreateOnDynamicTableStreamOptions.On.Statement", "Timestamp", "Offset", "Statement", "Stream"))
+	})
+
+	t.Run("basic", func(t *testing.T) {
+		opts := defaultOpts()
+		opts.On = nil
+		assertOptsValidAndSQLEquals(t, opts, "CREATE STREAM %s ON DYNAMIC TABLE %s", id.FullyQualifiedName(), dynamicTableId.FullyQualifiedName())
+	})
+
+	t.Run("all options", func(t *testing.T) {
+		opts := defaultOpts()
+		opts.IfNotExists = Bool(true)
+		opts.CopyGrants = Bool(true)
+		opts.On = &OnStream{
+			At: Bool(true),
+			Statement: OnStreamStatement{
+				Statement: String("123"),
+			},
+		}
+		opts.Comment = String("some comment")
+		assertOptsValidAndSQLEquals(t, opts, `CREATE STREAM IF NOT EXISTS %s COPY GRANTS ON DYNAMIC TABLE %s AT (STATEMENT => 123) INSERT_ONLY = true COMMENT = 'some comment'`, id.FullyQualifiedName(), dynamicTableId.FullyQualifiedName())
+	})
+}
+
 func TestStreams_Clone(t *testing.T) {
 	id := RandomSchemaObjectIdentifier()
 	sourceId := RandomSchemaObjectIdentifier()

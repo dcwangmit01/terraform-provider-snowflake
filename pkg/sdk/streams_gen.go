@@ -11,6 +11,7 @@ type Streams interface {
 	CreateOnExternalTable(ctx context.Context, request *CreateOnExternalTableStreamRequest) error
 	CreateOnDirectoryTable(ctx context.Context, request *CreateOnDirectoryTableStreamRequest) error
 	CreateOnView(ctx context.Context, request *CreateOnViewStreamRequest) error
+	CreateOnDynamicTable(ctx context.Context, request *CreateOnDynamicTableStreamRequest) error
 	Clone(ctx context.Context, request *CloneStreamRequest) error
 	Alter(ctx context.Context, request *AlterStreamRequest) error
 	Drop(ctx context.Context, request *DropStreamRequest) error
@@ -90,6 +91,20 @@ type CreateOnViewStreamOptions struct {
 	AppendOnly      *bool                  `ddl:"parameter" sql:"APPEND_ONLY"`
 	ShowInitialRows *bool                  `ddl:"parameter" sql:"SHOW_INITIAL_ROWS"`
 	Comment         *string                `ddl:"parameter,single_quotes" sql:"COMMENT"`
+}
+
+// CreateOnDynamicTableStreamOptions is based on https://docs.snowflake.com/en/sql-reference/sql/create-stream.
+type CreateOnDynamicTableStreamOptions struct {
+	create         bool                   `ddl:"static" sql:"CREATE"`
+	OrReplace      *bool                  `ddl:"keyword" sql:"OR REPLACE"`
+	stream         bool                   `ddl:"static" sql:"STREAM"`
+	IfNotExists    *bool                  `ddl:"keyword" sql:"IF NOT EXISTS"`
+	name           SchemaObjectIdentifier `ddl:"identifier"`
+	CopyGrants     *bool                  `ddl:"keyword" sql:"COPY GRANTS"`
+	onDynamicTable bool                   `ddl:"static" sql:"ON DYNAMIC TABLE"`
+	DynamicTableId SchemaObjectIdentifier `ddl:"identifier"`
+	On             *OnStream              `ddl:"keyword"`
+	Comment        *string                `ddl:"parameter,single_quotes" sql:"COMMENT"`
 }
 
 // CloneStreamOptions is based on https://docs.snowflake.com/en/sql-reference/sql/create-stream#variant-syntax.
