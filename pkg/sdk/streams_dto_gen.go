@@ -7,6 +7,7 @@ var (
 	_ optionsProvider[CreateOnExternalTableStreamOptions]  = new(CreateOnExternalTableStreamRequest)
 	_ optionsProvider[CreateOnDirectoryTableStreamOptions] = new(CreateOnDirectoryTableStreamRequest)
 	_ optionsProvider[CreateOnViewStreamOptions]           = new(CreateOnViewStreamRequest)
+	_ optionsProvider[CreateOnDynamicTableStreamOptions]   = new(CreateOnDynamicTableStreamRequest)
 	_ optionsProvider[CloneStreamOptions]                  = new(CloneStreamRequest)
 	_ optionsProvider[AlterStreamOptions]                  = new(AlterStreamRequest)
 	_ optionsProvider[DropStreamOptions]                   = new(DropStreamRequest)
@@ -69,6 +70,16 @@ type CreateOnViewStreamRequest struct {
 	AppendOnly      *bool
 	ShowInitialRows *bool
 	Comment         *string
+}
+
+type CreateOnDynamicTableStreamRequest struct {
+	OrReplace      *bool
+	IfNotExists    *bool
+	name           SchemaObjectIdentifier // required
+	CopyGrants     *bool
+	DynamicTableId SchemaObjectIdentifier // required
+	On             *OnStreamRequest
+	Comment        *string
 }
 
 type CloneStreamRequest struct {

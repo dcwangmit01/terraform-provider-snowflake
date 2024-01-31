@@ -32,6 +32,11 @@ func (v *streams) CreateOnView(ctx context.Context, request *CreateOnViewStreamR
 	return validateAndExec(v.client, ctx, opts)
 }
 
+func (v *streams) CreateOnDynamicTable(ctx context.Context, request *CreateOnDynamicTableStreamRequest) error {
+	opts := request.toOpts()
+	return validateAndExec(v.client, ctx, opts)
+}
+
 func (v *streams) Clone(ctx context.Context, request *CloneStreamRequest) error {
 	opts := request.toOpts()
 	return validateAndExec(v.client, ctx, opts)
@@ -156,6 +161,31 @@ func (r *CreateOnViewStreamRequest) toOpts() *CreateOnViewStreamOptions {
 		AppendOnly:      r.AppendOnly,
 		ShowInitialRows: r.ShowInitialRows,
 		Comment:         r.Comment,
+	}
+	if r.On != nil {
+		opts.On = &OnStream{
+			At:     r.On.At,
+			Before: r.On.Before,
+			Statement: OnStreamStatement{
+				Timestamp: r.On.Statement.Timestamp,
+				Offset:    r.On.Statement.Offset,
+				Statement: r.On.Statement.Statement,
+				Stream:    r.On.Statement.Stream,
+			},
+		}
+	}
+	return opts
+}
+
+func (r *CreateOnDynamicTableStreamRequest) toOpts() *CreateOnDynamicTableStreamOptions {
+	opts := &CreateOnDynamicTableStreamOptions{
+		OrReplace:      r.OrReplace,
+		IfNotExists:    r.IfNotExists,
+		name:           r.name,
+		CopyGrants:     r.CopyGrants,
+		DynamicTableId: r.DynamicTableId,
+
+		Comment: r.Comment,
 	}
 	if r.On != nil {
 		opts.On = &OnStream{
